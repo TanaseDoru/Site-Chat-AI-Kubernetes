@@ -20,7 +20,6 @@ This project focuses on creating a site with a public chat accesed by everyone a
 ## Parte Chat
 ### Frontned
 ```bash
-npm init vue@latest
 cd chat-frontend
 npm install
 ```
