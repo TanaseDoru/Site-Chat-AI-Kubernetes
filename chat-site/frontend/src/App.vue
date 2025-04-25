@@ -1,22 +1,26 @@
 <template>
   <div id="app">
-    <ChatForm />
+    <h1>WebSocket Chat Test</h1>
+    <WebSocketTest />
   </div>
 </template>
 
 <script>
-import ChatForm from './components/ChatForm.vue';
+import WebSocketTest from './components/WebSocketTest.vue'
 
 export default {
+  name: 'App',
   components: {
-    ChatForm
+    WebSocketTest
   }
-};
+}
 </script>
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
