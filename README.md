@@ -20,10 +20,17 @@ This project focuses on creating a site with a public chat accesed by everyone a
 ## Parte Chat
 ### Frontned
 ```bash
-cd chat-frontend
+cd frontend
 npm install
 ```
 Rulare:
 ```bash
 npm run dev
+```
+
+### Backend
+```bash
+cd backend
+mvn clean package
+java -jar target/chat-server.jar
 ```
