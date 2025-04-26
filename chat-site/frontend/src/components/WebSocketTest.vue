@@ -1,150 +1,482 @@
 <template>
-    <div class="websocket-test">
-      <h2>WebSocket Test</h2>
-      <div class="status" :class="{ connected: isConnected }">
-        Status: {{ isConnected ? 'Connected' : 'Disconnected' }}
+  <div class="chat-container">
+    <!-- Username Prompt -->
+    <div v-if="!username" class="username-prompt">
+      <h2>Welcome to the Chat!</h2>
+      <input
+        v-model="usernameInput"
+        placeholder="Enter your username..."
+        @keyup.enter="setUsername"
+      />
+      <button @click="setUsername" :disabled="!usernameInput.trim()">Join Chat</button>
+    </div>
+
+    <!-- Chat Interface -->
+    <div v-else class="chat-interface">
+      <div class="chat-header">
+        <span>Chat as {{ username }}</span>
+        <span class="status" :class="{ connected: isConnected }">
+          {{ isConnected ? 'Online' : 'Offline' }}
+        </span>
       </div>
-      <div class="debug-log">
-        <h3>Debug Log:</h3>
-        <div class="log-entries">
-          <div v-for="(log, index) in logs" :key="index" class="log-entry">
+
+      <div class="chat-layout">
+        <div class="user-list">
+          <h3>Connected Users</h3>
+          <div class="user-list-content">
+            <div v-for="(user, index) in connectedUsers" :key="index" class="user-item">
+              {{ user }}
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-content">
+          <div class="chat-messages">
+            <div
+              v-for="(message, index) in messages"
+              :key="index"
+              class="message"
+              :class="{ 
+                'self-message': message.isSelf, 
+                'system-message': message.isSystem,
+                'leave-message': message.isLeave
+              }"
+            >
+              {{ message.text }}
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <div class="input-container">
+              <input
+                v-model="message"
+                placeholder="Type a message..."
+                @keyup.enter="sendMessage"
+                @input="handleInput"
+                :class="{ 'max-letters': letterCount >= 50 }"
+              />
+              <div class="letter-counter" :class="{ 'max-letters': letterCount >= 50 }">
+                {{ letterCount }}/50
+              </div>
+            </div>
+            <button 
+              @click="sendMessage" 
+              :disabled="!isConnected || !message.trim() || letterCount >= 50"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug Panel -->
+      <button class="debug-toggle" @click="toggleDebug">
+        {{ showDebug ? 'Hide Debug' : 'Show Debug' }}
+      </button>
+      <div class="debug-panel" :class="{ 'debug-panel-open': showDebug }">
+        <h3>Debug Logs</h3>
+        <div class="debug-logs">
+          <div v-for="(log, index) in logs" :key="index" class="debug-entry">
             {{ log }}
           </div>
         </div>
       </div>
-      <div class="controls">
-        <input v-model="message" placeholder="Type a message..." />
-        <button @click="sendMessage" :disabled="!isConnected">Send</button>
-      </div>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'WebSocketTest',
-    data() {
-      return {
-        socket: null,
-        isConnected: false,
-        message: '',
-        logs: []
-      }
-    },
-    methods: {
-      addLog(message) {
-        const timestamp = new Date().toISOString()
-        this.logs.unshift(`[${timestamp}] ${message}`)
-      },
-      connect() {
-        this.addLog('Attempting to connect...')
-        try {
-          this.socket = new WebSocket('ws://localhost:8080/chat')
-          
-          this.socket.onopen = () => {
-            this.isConnected = true
-            this.addLog('Connection established!')
-          }
-          
-          this.socket.onmessage = (event) => {
-            this.addLog(`Received message: ${event.data}`)
-          }
-          
-          this.socket.onclose = () => {
-            this.isConnected = false
-            this.addLog('Connection closed')
-            // Try to reconnect after 5 seconds
-            setTimeout(() => this.connect(), 5000)
-          }
-          
-          this.socket.onerror = (error) => {
-            this.addLog(`WebSocket error: ${error}`)
-          }
-        } catch (error) {
-          this.addLog(`Failed to connect: ${error.message}`)
-        }
-      },
-      sendMessage() {
-        if (this.isConnected && this.message.trim()) {
-          this.socket.send(this.message)
-          this.addLog(`Sent message: ${this.message}`)
-          this.message = ''
-        }
-      }
-    },
-    mounted() {
-      this.connect()
-    },
-    beforeUnmount() {
-      if (this.socket) {
-        this.socket.close()
-      }
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'WebSocketTest',
+  data() {
+    return {
+      socket: null,
+      isConnected: false,
+      username: '',
+      usernameInput: '',
+      message: '',
+      messages: [],
+      logs: [],
+      showDebug: false,
+      connectedUsers: [],
+    };
+  },
+  computed: {
+    letterCount() {
+      return this.message.length;
     }
-  }
-  </script>
-  
-  <style scoped>
-  .websocket-test {
-    padding: 20px;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  .status {
-    padding: 10px;
-    margin: 10px 0;
-    background-color: #ff4444;
-    color: white;
-    border-radius: 4px;
-  }
-  
-  .status.connected {
-    background-color: #44ff44;
-  }
-  
-  .debug-log {
-    margin: 20px 0;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 4px;
-  }
-  
-  .log-entries {
-    height: 300px;
-    overflow-y: auto;
-    background: #f5f5f5;
-    padding: 10px;
-  }
-  
-  .log-entry {
-    font-family: monospace;
-    margin: 5px 0;
-    white-space: pre-wrap;
-  }
-  
-  .controls {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  
-  input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  button {
-    padding: 8px 16px;
-    background-color: #4444ff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-  </style>
+  },
+  methods: {
+    addLog(message) {
+      const timestamp = new Date().toISOString();
+      this.logs.unshift(`[${timestamp}] ${message}`);
+    },
+    setUsername() {
+      if (this.usernameInput.trim()) {
+        this.username = this.usernameInput.trim();
+        this.connect();
+      }
+    },
+    connect() {
+      this.addLog('Attempting to connect...');
+      try {
+        this.socket = new WebSocket(`ws://localhost:8080/chat?username=${encodeURIComponent(this.username)}`);
+
+        this.socket.onopen = () => {
+          this.isConnected = true;
+          this.addLog('Connection established!');
+        };
+
+        this.socket.onmessage = (event) => {
+          const timestamp = new Date().toLocaleString();
+          const messageText = event.data;
+          let formattedMessage;
+          let isSystem = false;
+          let isLeave = false;
+
+          // Handle user list updates
+          if (messageText.startsWith('USERLIST:')) {
+            this.connectedUsers = messageText.substring(9).split(',').filter(user => user);
+            return;
+          }
+
+          // Check if the message is a system message (e.g., "user joined" or "user left")
+          if (messageText.includes('joined the chat') || messageText.includes('left the chat')) {
+            formattedMessage = `[${timestamp}] ${messageText}`;
+            isSystem = true;
+            isLeave = messageText.includes('left the chat');
+          } else {
+            formattedMessage = `[${timestamp}] ${messageText}`;
+          }
+
+          this.messages.push({ 
+            text: formattedMessage, 
+            isSelf: false, 
+            isSystem,
+            isLeave 
+          });
+        };
+
+        this.socket.onclose = () => {
+          this.isConnected = false;
+          this.addLog('Connection closed');
+          setTimeout(() => this.connect(), 5000);
+        };
+
+        this.socket.onerror = (error) => {
+          this.addLog(`WebSocket error: ${error}`);
+        };
+      } catch (error) {
+        this.addLog(`Failed to connect: ${error.message}`);
+      }
+    },
+    sendMessage() {
+      if (this.isConnected && this.message.trim()) {
+        // Truncate message to 50 letters
+        const truncatedMessage = this.message.slice(0, 50);
+        if (this.message.length > 50) {
+          this.addLog('Message was truncated to 50 letters');
+        }
+        
+        const messageText = `${this.username}: ${truncatedMessage}`;
+        this.socket.send(messageText);
+        const timestamp = new Date().toLocaleString();
+        this.messages.push({
+          text: `[${timestamp}] ${messageText}`,
+          isSelf: true,
+          isSystem: false,
+        });
+        this.addLog(`Sent message: ${messageText}`);
+        this.message = '';
+      }
+    },
+    toggleDebug() {
+      this.showDebug = !this.showDebug;
+    },
+    handleInput(event) {
+      if (this.message.length >= 50 && event.inputType !== 'deleteContentBackward' && event.inputType !== 'deleteContentForward') {
+        event.preventDefault();
+        return;
+      }
+      this.message = event.target.value;
+    },
+  },
+  beforeUnmount() {
+    if (this.socket) {
+      this.socket.close();
+    }
+  },
+};
+</script>
+
+<style scoped>
+.chat-container {
+  width: 100%;
+  max-width: 700px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Username Prompt */
+.username-prompt {
+  padding: 30px;
+  text-align: center;
+}
+
+.username-prompt h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.username-prompt input {
+  padding: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.username-prompt button {
+  padding: 10px 20px;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.username-prompt button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Chat Interface */
+.chat-interface {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+.chat-header {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-header span {
+  font-size: 1rem;
+  color: #555;
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  background-color: #ff4444;
+  color: white;
+}
+
+.status.connected {
+  background-color: #44ff44;
+}
+
+.chat-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.user-list {
+  width: 200px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-list h3 {
+  padding: 15px;
+  margin: 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 1rem;
+  color: #333;
+}
+
+.user-list-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.user-item {
+  padding: 8px 12px;
+  margin: 4px 0;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  padding: 10px 15px;
+  border-radius: 15px;
+  max-width: 300px;
+  word-wrap: break-word;
+  background-color: #e9ecef;
+  align-self: flex-start;
+  margin: 5px 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.self-message {
+  background-color: #1a73e8;
+  color: white;
+  align-self: flex-end;
+}
+
+.system-message {
+  background-color: #d4edda;
+  color: #155724;
+  align-self: center;
+  max-width: 100%;
+  text-align: center;
+}
+
+.system-message.leave-message {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.chat-input {
+  padding: 15px;
+  border-top: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
+  background: white;
+}
+
+.input-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  padding-right: 50px; /* Make space for the counter */
+}
+
+.chat-input input.max-letters {
+  border-color: #dc3545;
+  background-color: #fff8f8;
+}
+
+.letter-counter {
+  position: absolute;
+  right: 10px;
+  color: #666;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.letter-counter.max-letters {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.chat-input button {
+  padding: 10px 20px;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.chat-input button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Debug Panel */
+.debug-toggle {
+  margin: 15px;
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.debug-toggle:hover {
+  background-color: #5a6268;
+}
+
+.debug-panel {
+  height: 0;
+  background: #f8f9fa;
+  border-top: 1px solid #ddd;
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.debug-panel-open {
+  height: 200px;
+}
+
+.debug-panel h3 {
+  padding: 10px 15px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.debug-logs {
+  height: 150px;
+  overflow-y: auto;
+  padding: 0 15px 15px;
+  background: #f5f5f5;
+}
+
+.debug-entry {
+  font-family: monospace;
+  margin: 5px 0;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  color: #555;
+}
+</style>

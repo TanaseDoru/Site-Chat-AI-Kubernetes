@@ -1,28 +1,64 @@
 <template>
   <div id="app">
-    <h1>WebSocket Chat Test</h1>
-    <WebSocketTest />
+    <header class="chat-header">
+      <h1>WebSocket Chat</h1>
+    </header>
+    <main>
+      <WebSocketTest />
+    </main>
   </div>
 </template>
 
 <script>
-import WebSocketTest from './components/WebSocketTest.vue'
+import WebSocketTest from './components/WebSocketTest.vue';
 
 export default {
   name: 'App',
   components: {
-    WebSocketTest
-  }
-}
+    WebSocketTest,
+  },
+};
 </script>
 
 <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f0f2f5;
+}
+
 #app {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  background-color: #1a73e8;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header h1 {
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
