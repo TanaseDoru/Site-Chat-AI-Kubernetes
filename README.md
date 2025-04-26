@@ -34,3 +34,14 @@ cd backend
 mvn clean package
 java -jar target/chat-server.jar
 ```
+
+
+## TO DO:
+- [ ] Sa mearga baza de date pentru chat
+- [ ] Un engine pentru site
+- [ ] Dockerfile
+- [ ] K8s 
+- [ ] CMS 
+- [ ] Parte AI
+
+
