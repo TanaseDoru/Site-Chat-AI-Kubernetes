@@ -1,3 +1,4 @@
-WebSocketChat.class
-Main.class
-Main$ChatWebSocketServlet.class
+com/example/chat/Main.class
+com/example/chat/WebSocketChat.class
+com/example/chat/Main$ChatWebSocketServlet.class
+com/example/chat/MongoDBService.class

@@ -31,30 +31,30 @@
         </div>
 
         <div class="chat-content">
-          <div class="chat-messages">
-            <div
-              v-for="(message, index) in messages"
-              :key="index"
-              class="message"
+      <div class="chat-messages">
+        <div
+          v-for="(message, index) in messages"
+          :key="index"
+          class="message"
               :class="{ 
                 'self-message': message.isSelf, 
                 'system-message': message.isSystem,
                 'leave-message': message.isLeave
               }"
-            >
-              {{ message.text }}
-            </div>
-          </div>
+        >
+          {{ message.text }}
+        </div>
+      </div>
 
-          <div class="chat-input">
+      <div class="chat-input">
             <div class="input-container">
-              <input
-                v-model="message"
-                placeholder="Type a message..."
-                @keyup.enter="sendMessage"
+        <input
+          v-model="message"
+          placeholder="Type a message..."
+          @keyup.enter="sendMessage"
                 @input="handleInput"
                 :class="{ 'max-letters': letterCount >= 50 }"
-              />
+        />
               <div class="letter-counter" :class="{ 'max-letters': letterCount >= 50 }">
                 {{ letterCount }}/50
               </div>
@@ -63,8 +63,8 @@
               @click="sendMessage" 
               :disabled="!isConnected || !message.trim() || letterCount >= 50"
             >
-              Send
-            </button>
+          Send
+        </button>
           </div>
         </div>
       </div>
@@ -108,8 +108,13 @@ export default {
   },
   methods: {
     addLog(message) {
-      const timestamp = new Date().toISOString();
-      this.logs.unshift(`[${timestamp}] ${message}`);
+      this.logs.unshift(message);
+    },
+    scrollToBottom() {
+      const chatMessages = this.$el.querySelector('.chat-messages');
+      if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
     },
     setUsername() {
       if (this.usernameInput.trim()) {
@@ -125,10 +130,12 @@ export default {
         this.socket.onopen = () => {
           this.isConnected = true;
           this.addLog('Connection established!');
+          this.$nextTick(() => {
+            this.scrollToBottom();
+          });
         };
 
         this.socket.onmessage = (event) => {
-          const timestamp = new Date().toLocaleString();
           const messageText = event.data;
           let formattedMessage;
           let isSystem = false;
@@ -142,11 +149,11 @@ export default {
 
           // Check if the message is a system message (e.g., "user joined" or "user left")
           if (messageText.includes('joined the chat') || messageText.includes('left the chat')) {
-            formattedMessage = `[${timestamp}] ${messageText}`;
+            formattedMessage = messageText;
             isSystem = true;
             isLeave = messageText.includes('left the chat');
           } else {
-            formattedMessage = `[${timestamp}] ${messageText}`;
+            formattedMessage = messageText;
           }
 
           this.messages.push({ 
@@ -154,6 +161,10 @@ export default {
             isSelf: false, 
             isSystem,
             isLeave 
+          });
+
+          this.$nextTick(() => {
+            this.scrollToBottom();
           });
         };
 
@@ -178,16 +189,27 @@ export default {
           this.addLog('Message was truncated to 50 letters');
         }
         
-        const messageText = `${this.username}: ${truncatedMessage}`;
-        this.socket.send(messageText);
-        const timestamp = new Date().toLocaleString();
+        // Add local timestamp for sender's view
+        const now = new Date();
+        const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+        const localMessage = `[${timestamp}] ${this.username}: ${truncatedMessage}`;
+        
+        // Send message without timestamp to server
+        const serverMessage = `${this.username}: ${truncatedMessage}`;
+        this.socket.send(serverMessage);
+        
+        // Add message to local view with timestamp
         this.messages.push({
-          text: `[${timestamp}] ${messageText}`,
+          text: localMessage,
           isSelf: true,
           isSystem: false,
         });
-        this.addLog(`Sent message: ${messageText}`);
+        this.addLog(`Sent message: ${localMessage}`);
         this.message = '';
+        
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
       }
     },
     toggleDebug() {
@@ -212,16 +234,24 @@ export default {
 <style scoped>
 .chat-container {
   width: 100%;
-  max-width: 700px;
+  max-width: 100%;
+  margin: 0;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 0;      /* flush to edges on small */
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 /* Username Prompt */
 .username-prompt {
-  padding: 30px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
   text-align: center;
 }
 
@@ -297,6 +327,7 @@ export default {
 
 .user-list {
   width: 200px;
+  min-width: 150px;
   background-color: #f8f9fa;
   border-right: 1px solid #ddd;
   display: flex;
@@ -323,6 +354,9 @@ export default {
   background-color: white;
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-content {
@@ -330,6 +364,7 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0; /* This helps with text overflow */
 }
 
 .chat-messages {
@@ -345,7 +380,7 @@ export default {
 .message {
   padding: 10px 15px;
   border-radius: 15px;
-  max-width: 300px;
+  max-width: 80%;
   word-wrap: break-word;
   background-color: #e9ecef;
   align-self: flex-start;
@@ -385,6 +420,7 @@ export default {
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0; /* This helps with text overflow */
 }
 
 .chat-input input {
@@ -393,7 +429,8 @@ export default {
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 1rem;
-  padding-right: 50px; /* Make space for the counter */
+  padding-right: 50px;
+  min-width: 0; /* This helps with text overflow */
 }
 
 .chat-input input.max-letters {
@@ -423,6 +460,7 @@ export default {
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .chat-input button:disabled {
@@ -478,5 +516,40 @@ export default {
   white-space: pre-wrap;
   font-size: 0.9rem;
   color: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chat-container {
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .chat-interface {
+    height: 100vh;
+  }
+
+  .user-list {
+    width: 150px;
+    min-width: 120px;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-list {
+    display: none;
+  }
+
+  .chat-input {
+    flex-direction: column;
+  }
+
+  .chat-input button {
+    width: 100%;
+  }
 }
 </style>

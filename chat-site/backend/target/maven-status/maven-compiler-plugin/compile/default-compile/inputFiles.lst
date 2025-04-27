@@ -1,2 +1,3 @@
-/home/tanase/Desktop/Site-Chat-AI-Kubernetes/chat-site/backend/src/main/java/Main.java
-/home/tanase/Desktop/Site-Chat-AI-Kubernetes/chat-site/backend/src/main/java/WebSocketChat.java
+/home/tanase/Desktop/Site-Chat-AI-Kubernetes/chat-site/backend/src/main/java/com/example/chat/Main.java
+/home/tanase/Desktop/Site-Chat-AI-Kubernetes/chat-site/backend/src/main/java/com/example/chat/MongoDBService.java
+/home/tanase/Desktop/Site-Chat-AI-Kubernetes/chat-site/backend/src/main/java/com/example/chat/WebSocketChat.java
