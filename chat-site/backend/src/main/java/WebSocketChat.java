@@ -1,6 +1,5 @@
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 
 import java.io.IOException;
 import java.util.Collections;
