@@ -168,10 +168,13 @@ export default {
           });
         };
 
-        this.socket.onclose = () => {
+        this.socket.onclose = (event) => {
           this.isConnected = false;
-          this.addLog('Connection closed');
-          setTimeout(() => this.connect(), 5000);
+          this.addLog(`Connection closed: ${event.code} - ${event.reason || 'No reason provided'}`);
+          // Only attempt to reconnect if the connection was not closed by the user
+          if (event.code !== 1000) {
+            setTimeout(() => this.connect(), 5000);
+          }
         };
 
         this.socket.onerror = (error) => {
@@ -179,6 +182,7 @@ export default {
         };
       } catch (error) {
         this.addLog(`Failed to connect: ${error.message}`);
+        setTimeout(() => this.connect(), 5000);
       }
     },
     sendMessage() {

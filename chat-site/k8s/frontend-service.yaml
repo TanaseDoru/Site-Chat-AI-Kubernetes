@@ -2,11 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chat-frontend-service
-  namespace: chat-system
 spec:
+  type: NodePort
+  selector:
+    app: chat-frontend
   ports:
   - port: 90
     targetPort: 90
-  selector:
-    app: chat-frontend
-  type: LoadBalancer
+    nodePort: 30090
+    protocol: TCP
