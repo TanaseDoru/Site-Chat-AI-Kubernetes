@@ -21,7 +21,11 @@ public class MongoDBService {
 
     public MongoDBService() {
         // Connect to MongoDB
-        mongoClient = MongoClients.create("mongodb://localhost:27017");
+        String mongoUri = System.getenv("MONGO_URI");
+        if (mongoUri == null) {
+            throw new RuntimeException("MONGO_URI environment variable not set");
+        }
+        mongoClient = MongoClients.create(mongoUri);
         database = mongoClient.getDatabase("chat");
         messagesCollection = database.getCollection("messages");
     }

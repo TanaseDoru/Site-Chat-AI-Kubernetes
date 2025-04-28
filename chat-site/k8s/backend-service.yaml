@@ -5,8 +5,15 @@ metadata:
   namespace: chat-system
 spec:
   ports:
+  # Service listens on port 88
   - port: 88
-    targetPort: 88
+    # Service targets the containerPort named 'websocket' (which is 88) in the backend pods
+    targetPort: websocket 
+    protocol: TCP
+    name: http-websocket # Naming the port for clarity
   selector:
+    # Selects pods with the label 'app: chat-backend'
     app: chat-backend
-  type: LoadBalancer
+  # Type ClusterIP is suitable for internal communication via Ingress
+  type: ClusterIP
+

@@ -9,4 +9,4 @@ spec:
     targetPort: 90
   selector:
     app: chat-frontend
-  type: LoadBalancer
+  type: ClusterIP

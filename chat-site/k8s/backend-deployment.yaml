@@ -4,7 +4,7 @@ metadata:
   name: chat-backend
   namespace: chat-system
 spec:
-  replicas: 4
+  replicas: 1 # Reduced replicas to 1 for easier debugging initially
   selector:
     matchLabels:
       app: chat-backend
@@ -14,10 +14,19 @@ spec:
         app: chat-backend
     spec:
       containers:
-      - name: chat-backend
-        image: tanase0/chat-backend:latest
+      - name: chat-backend-java # Renamed for clarity
+        # IMPORTANT: Replace with your actual Java application image
+        # This image should run the Java app directly, listening on port 88
+        image: tanase0/backend-chat-std:latest
         ports:
-        - containerPort: 88
+        # Java application should listen on this port
+        - containerPort: 88 
+          name: websocket
         env:
         - name: MONGO_URI
           value: "mongodb://mongodb-service:27017/chatdb"
+        # Add any other environment variables your Java application needs
+        # For example, if it needs the port configured via env:
+        # - name: SERVER_PORT
+        #   value: "88" 
+

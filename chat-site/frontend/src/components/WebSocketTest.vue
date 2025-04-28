@@ -125,7 +125,11 @@ export default {
     connect() {
       this.addLog('Attempting to connect...');
       try {
-        this.socket = new WebSocket(`ws://localhost:8080/chat?username=${encodeURIComponent(this.username)}`);
+        const endpoint = process.env.VUE_APP_WS_ENDPOINT || '/chat';
+        const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const url = `${wsProto}://${window.location.hostname}${endpoint}?username=${encodeURIComponent(this.username)}`;
+        this.socket = new WebSocket(url);
+
 
         this.socket.onopen = () => {
           this.isConnected = true;

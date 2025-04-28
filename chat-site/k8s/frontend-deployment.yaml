@@ -15,6 +15,10 @@ spec:
     spec:
       containers:
       - name: chat-frontend
-        image: tanase0/chat-frontend:latest
+        image: tanase0/frontend-chat-std:latest
         ports:
         - containerPort: 90
+        env:
+        - name: VUE_APP_WS_ENDPOINT
+          value: "/chat"
+
