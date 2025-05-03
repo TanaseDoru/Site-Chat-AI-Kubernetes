@@ -16,7 +16,7 @@ This project focuses on creating a site with a public chat accesed by everyone a
 
 
 # Tutorial instalare
-De rulat script-ul /chat-site/deploy 
+De rulat script-ul /chat-site/deploy.sh
 
 
 ## TO DO:
