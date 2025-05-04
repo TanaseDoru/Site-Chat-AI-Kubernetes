@@ -127,7 +127,7 @@ export default {
       try {
         const endpoint = process.env.VUE_APP_WS_ENDPOINT || '/chat';
         const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const url = `${wsProto}://${window.location.hostname}${endpoint}?username=${encodeURIComponent(this.username)}`;
+        const url = `${wsProto}://${window.location.hostname}:88${endpoint}?username=${encodeURIComponent(this.username)}`;
         this.socket = new WebSocket(url);
 
 

@@ -7,7 +7,8 @@ microk8s kubectl apply -n chat-system -f k8s/mongodb-deployment.yaml \
                                             -f k8s/backend-deployment.yaml \
                                             -f k8s/backend-service.yaml \
                                             -f k8s/frontend-deployment.yaml \
-                                            -f k8s/frontend-service.yaml
+                                            -f k8s/frontend-service.yaml \
+                                            -f k8s/vveb-deployment.yaml 
 
 # 3. Ingress (expune tot pe 80)
 microk8s kubectl apply -n chat-system -f k8s/ingress.yaml

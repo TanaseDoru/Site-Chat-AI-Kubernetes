@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-backend
+  namespace: chat-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-backend
+  template:
+    metadata:
+      labels:
+        app: chat-backend
+    spec:
+      containers:
+      - name: chat-backend-java
+        image: tanase0/backend-chat-std:latest
+        ports:
+        - containerPort: 88
+          hostPort: 88
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb-service:27017/chatdb"
