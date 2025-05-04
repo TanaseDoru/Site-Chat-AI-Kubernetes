@@ -1,0 +1,14 @@
+{
+    "name": "vvveb-php-cms/vveb",  
+    "description": "Vveb.js CMS integration in PHP/Apache",
+    "require": {
+      "php": "^8.1",
+      "ext-pdo": "*",
+      "ext-pdo_mysql": "*"
+    },
+    "autoload": {
+      "psr-4": {
+        "App\\": "src/"
+      }
+    }
+  }

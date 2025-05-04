@@ -1,0 +1,291 @@
+]633;E;for file in *;f318574a-900f-4bdc-86db-fa1bb984b101]633;C===== backend-deployment.yaml =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-backend
+  namespace: chat-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-backend
+  template:
+    metadata:
+      labels:
+        app: chat-backend
+    spec:
+      containers:
+      - name: chat-backend-java
+        image: tanase0/backend-chat-std:latest
+        ports:
+        - containerPort: 88
+          hostPort: 88
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb-service:27017/chatdb"
+===== backend-service.yaml =====
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-backend-service
+  namespace: chat-system
+spec:
+  ports:
+  # Service listens on port 88
+  - port: 88
+    # Service targets the containerPort named 'websocket' (which is 88) in the backend pods
+    targetPort: websocket 
+    protocol: TCP
+    name: http-websocket # Naming the port for clarity
+  selector:
+    # Selects pods with the label 'app: chat-backend'
+    app: chat-backend
+  # Type ClusterIP is suitable for internal communication via Ingress
+  type: ClusterIP
+
+
+===== file.txt =====
+
+===== frontend-deployment.yaml =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-frontend
+  namespace: chat-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-frontend
+  template:
+    metadata:
+      labels:
+        app: chat-frontend
+    spec:
+      containers:
+      - name: chat-frontend
+        image: tanase0/frontend-chat-std:latest
+        ports:
+        - containerPort: 90
+          hostPort: 90
+        env:
+        - name: VUE_APP_WS_ENDPOINT
+          value: "/chat"  # Nota: Codul frontend trebuie să construiască ws://<host>:88/chat
+===== frontend-service.yaml =====
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-frontend-service
+  namespace: chat-system
+spec:
+  ports:
+  - port: 90
+    targetPort: 90
+  selector:
+    app: chat-frontend
+  type: ClusterIP
+
+===== ingress.yaml =====
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chat-ingress
+  namespace: chat-system
+  annotations:
+    # These annotations are crucial for WebSocket support
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+      proxy_set_header Host $host;
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /chat
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-backend-service
+            port:
+              number: 88
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-frontend-service
+            port:
+              number: 90
+
+===== mongodb-deployment.yaml =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: chat-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+===== mongodb-service.yaml =====
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: chat-system
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    app: mongodb
+  type: ClusterIP
+
+===== namespace.yaml =====
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chat-system
+
+===== vveb-deployment.yaml =====
+---
+# 1. Secret with two keys: root and app user
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+data:
+  mysql-root-password: cGFzc3dvcmQ=    # base64("password")
+  mysql-app-password: cGF2YV92dmVi    # base64("pava_vveb")
+
+---
+# 2. Headless service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  clusterIP: None
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      name: mysql
+
+---
+# 3. MySQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-root-password
+        - name: MYSQL_DATABASE
+          value: vveb_db
+        - name: MYSQL_USER
+          value: vveb
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-app-password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 5Gi
+
+---
+# 4. CMS Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vveb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vveb
+  template:
+    metadata:
+      labels:
+        app: vveb
+    spec:
+      containers:
+      - name: vveb
+        image: your-registry/vveb-php-cms:latest
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: DB_HOST
+          value: mysql
+        - name: DB_NAME
+          value: vveb_db
+        - name: DB_USER
+          value: vveb
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-app-password
+
+---
+# 5. Service to expose CMS internally (ClusterIP)
+#    Use an Ingress later for public port 80
+apiVersion: v1
+kind: Service
+metadata:
+  name: vveb-service
+spec:
+  selector:
+    app: vveb
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
