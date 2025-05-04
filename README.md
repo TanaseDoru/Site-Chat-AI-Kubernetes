@@ -16,31 +16,10 @@ This project focuses on creating a site with a public chat accesed by everyone a
 
 
 # Tutorial instalare
-
-## Parte Chat
-### Frontned
-```bash
-cd frontend
-npm install
-```
-Rulare:
-```bash
-npm run dev
-```
-
-### Backend
-```bash
-cd backend
-mvn clean package
-java -jar target/chat-server.jar
-```
+De rulat script-ul /chat-site/deploy.sh
 
 
 ## TO DO:
-- [ ] Sa mearga baza de date pentru chat
-- [ ] Un engine pentru site
-- [ ] Dockerfile
-- [ ] K8s 
 - [ ] CMS 
 - [ ] Parte AI
 
