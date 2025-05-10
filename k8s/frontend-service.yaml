@@ -2,7 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chat-frontend-service
-  namespace: chat-system
 spec:
   ports:
   - port: 90

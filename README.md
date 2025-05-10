@@ -22,5 +22,6 @@ De rulat script-ul /chat-site/deploy.sh
 ## TO DO:
 - [ ] CMS 
 - [ ] Parte AI
+- [ ] Persistent Volume pentru Chat
 
 

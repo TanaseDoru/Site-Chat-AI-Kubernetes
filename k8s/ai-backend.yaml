@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-backend
+  template:
+    metadata:
+      labels:
+        app: ai-backend
+    spec:
+      containers:
+      - name: ai-backend
+        image: tanase0/ai-service-backend:latest
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-backend-service
+spec:
+  selector:
+    app: ai-backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP

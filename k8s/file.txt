@@ -1,9 +1,75 @@
-]633;E;for file in *;f318574a-900f-4bdc-86db-fa1bb984b101]633;C===== backend-deployment.yaml =====
+]633;E;for file in *;c45fa2e6-68e5-4ace-8a39-e4003321e2b7]633;C===== ai-backend.yaml =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-backend
+  template:
+    metadata:
+      labels:
+        app: ai-backend
+    spec:
+      containers:
+      - name: ai-backend
+        image: tanase0/ai-service-backend:latest
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-backend-service
+spec:
+  selector:
+    app: ai-backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+===== ai-frontend.yaml =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-frontend
+  template:
+    metadata:
+      labels:
+        app: ai-frontend
+    spec:
+      containers:
+      - name: ai-frontend
+        image: tanase0/ai-service-frontend:latest
+        ports:
+        - containerPort: 5173
+        env:
+        - name: VITE_API_URL
+          value: "http://backend-service:8000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-frontend-service
+spec:
+  selector:
+    app: ai-frontend
+  ports:
+  - port: 80
+    targetPort: 5173
+  type: ClusterIP
+===== backend-deployment.yaml =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-backend
-  namespace: chat-system
 spec:
   replicas: 1
   selector:
@@ -28,7 +94,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chat-backend-service
-  namespace: chat-system
 spec:
   ports:
   # Service listens on port 88
@@ -44,6 +109,97 @@ spec:
   type: ClusterIP
 
 
+===== cms-pv.yaml =====
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: vvveb-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: microk8s-hostpath
+  hostPath:
+    path: /var/snap/microk8s/common/default-storage/vvveb-pvc
+===== cms.yaml =====
+---
+# Deployment for Vvveb CMS
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vvveb-cms
+  labels:
+    app: vvveb-cms
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: vvveb-cms
+  template:
+    metadata:
+      labels:
+        app: vvveb-cms
+    spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: vvveb-cms
+          image: vvveb/vvvebcms:php8.3-fpm-alpine
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_ENGINE
+              value: "sqlite"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: vvveb-storage
+              mountPath: /var/www/html
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "mkdir -p /var/www/html/sessions && chown 1001:1001 /var/www/html/sessions && chmod 755 /var/www/html/sessions && echo 'session.save_path=/var/www/html/sessions' > /usr/local/etc/php/conf.d/custom.ini && echo 'error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE' >> /usr/local/etc/php/conf.d/custom.ini && echo 'session.auto_start=0' >> /usr/local/etc/php/conf.d/custom.ini && echo 'session.use_cookies=1' >> /usr/local/etc/php/conf.d/custom.ini && echo 'session.cookie_lifetime=0' >> /usr/local/etc/php/conf.d/custom.ini"]
+      volumes:
+        - name: vvveb-storage
+          persistentVolumeClaim:
+            claimName: vvveb-pvc
+---
+# PersistentVolumeClaim for SQLite data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vvveb-pvc
+spec:
+  storageClassName: microk8s-hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Service to expose Vvveb CMS
+apiVersion: v1
+kind: Service
+metadata:
+  name: vvveb-service
+spec:
+  selector:
+    app: vvveb-cms
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+      nodePort: 30220
+  type: NodePort
 ===== file.txt =====
 
 ===== frontend-deployment.yaml =====
@@ -51,7 +207,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-frontend
-  namespace: chat-system
 spec:
   replicas: 1
   selector:
@@ -76,7 +231,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chat-frontend-service
-  namespace: chat-system
 spec:
   ports:
   - port: 90
@@ -89,10 +243,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: chat-ingress
-  namespace: chat-system
+  name: chat-and-cms-ingress
   annotations:
-    # These annotations are crucial for WebSocket support
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
@@ -103,29 +255,34 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - http:
-      paths:
-      - path: /chat
-        pathType: Prefix
-        backend:
-          service:
-            name: chat-backend-service
-            port:
-              number: 88
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: chat-frontend-service
-            port:
-              number: 90
-
+    - http:
+        paths:
+          - path: /chat
+            pathType: Prefix
+            backend:
+              service:
+                name: chat-frontend-service
+                port:
+                  number: 90
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vvveb-service
+                port:
+                  number: 80
+          - path: /ai
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-service
+                port:
+                  number: 70
 ===== mongodb-deployment.yaml =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb
-  namespace: chat-system
 spec:
   replicas: 1
   selector:
@@ -146,146 +303,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongodb-service
-  namespace: chat-system
 spec:
   ports:
   - port: 27017
     targetPort: 27017
   selector:
     app: mongodb
-  type: ClusterIP
-
-===== namespace.yaml =====
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: chat-system
-
-===== vveb-deployment.yaml =====
----
-# 1. Secret with two keys: root and app user
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mysql-secret
-type: Opaque
-data:
-  mysql-root-password: cGFzc3dvcmQ=    # base64("password")
-  mysql-app-password: cGF2YV92dmVi    # base64("pava_vveb")
-
----
-# 2. Headless service for StatefulSet
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql
-spec:
-  clusterIP: None
-  selector:
-    app: mysql
-  ports:
-    - port: 3306
-      name: mysql
-
----
-# 3. MySQL StatefulSet
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: mysql
-spec:
-  serviceName: mysql
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mysql
-  template:
-    metadata:
-      labels:
-        app: mysql
-    spec:
-      containers:
-      - name: mysql
-        image: mysql:5.7
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: mysql-root-password
-        - name: MYSQL_DATABASE
-          value: vveb_db
-        - name: MYSQL_USER
-          value: vveb
-        - name: MYSQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: mysql-app-password
-        ports:
-        - containerPort: 3306
-          name: mysql
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 5Gi
-
----
-# 4. CMS Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vveb-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: vveb
-  template:
-    metadata:
-      labels:
-        app: vveb
-    spec:
-      containers:
-      - name: vveb
-        image: your-registry/vveb-php-cms:latest
-        ports:
-        - containerPort: 80
-          name: http
-        env:
-        - name: DB_HOST
-          value: mysql
-        - name: DB_NAME
-          value: vveb_db
-        - name: DB_USER
-          value: vveb
-        - name: DB_PASS
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: mysql-app-password
-
----
-# 5. Service to expose CMS internally (ClusterIP)
-#    Use an Ingress later for public port 80
-apiVersion: v1
-kind: Service
-metadata:
-  name: vveb-service
-spec:
-  selector:
-    app: vveb
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 80
   type: ClusterIP
 
