@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ai-frontend
+  labels:
+    app: ai-frontend
 spec:
   replicas: 1
   selector:
@@ -16,10 +18,11 @@ spec:
       - name: ai-frontend
         image: tanase0/ai-service-frontend:latest
         ports:
-        - containerPort: 5173
+        - containerPort: 70
+          hostPort: 70
         env:
         - name: VITE_API_URL
-          value: "http://backend-service:8000"
+          value: "/api"
 ---
 apiVersion: v1
 kind: Service
@@ -29,6 +32,6 @@ spec:
   selector:
     app: ai-frontend
   ports:
-  - port: 80
-    targetPort: 5173
+  - port: 70
+    targetPort: 70
   type: ClusterIP

@@ -1,4 +1,4 @@
-]633;E;for file in *;c45fa2e6-68e5-4ace-8a39-e4003321e2b7]633;C===== ai-backend.yaml =====
+]633;E;for file in *;492b113d-fac7-466c-b85d-0fe14eba9110]633;C===== ai-backend.yaml =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,6 +35,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ai-frontend
+  labels:
+    app: ai-frontend
 spec:
   replicas: 1
   selector:
@@ -49,10 +51,11 @@ spec:
       - name: ai-frontend
         image: tanase0/ai-service-frontend:latest
         ports:
-        - containerPort: 5173
+        - containerPort: 70
+          hostPort: 70
         env:
         - name: VITE_API_URL
-          value: "http://backend-service:8000"
+          value: "http://ai-backend-service:8000"
 ---
 apiVersion: v1
 kind: Service
@@ -62,16 +65,17 @@ spec:
   selector:
     app: ai-frontend
   ports:
-  - port: 80
-    targetPort: 5173
+  - port: 70
+    targetPort: 70
   type: ClusterIP
+
 ===== backend-deployment.yaml =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-backend
 spec:
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: chat-backend
@@ -133,7 +137,7 @@ metadata:
   labels:
     app: vvveb-cms
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: vvveb-cms
@@ -255,29 +259,32 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
-        paths:
-          - path: /chat
-            pathType: Prefix
-            backend:
-              service:
-                name: chat-frontend-service
-                port:
-                  number: 90
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: vvveb-service
-                port:
-                  number: 80
-          - path: /ai
-            pathType: Prefix
-            backend:
-              service:
-                name: ai-service
-                port:
-                  number: 70
+  - http:
+      paths:
+      - path: /chat
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-frontend-service
+            port:
+              number: 90
+
+      - path: /ai
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-frontend-service
+            port:
+              number: 70
+
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vvveb-service
+            port:
+              number: 8080
+
 ===== mongodb-deployment.yaml =====
 apiVersion: apps/v1
 kind: Deployment
