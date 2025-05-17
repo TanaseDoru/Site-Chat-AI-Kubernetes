@@ -20,8 +20,7 @@ De rulat script-ul /chat-site/deploy.sh
 
 
 ## TO DO:
-- [ ] CMS 
-- [ ] Parte AI
-- [ ] Persistent Volume pentru Chat
+- [ ] Ai-Backend doesn't want to go to 4 replicas
+- [ ] Move docker images to private registry
 
 
