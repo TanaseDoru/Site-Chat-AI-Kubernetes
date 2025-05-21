@@ -20,17 +20,10 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: chat-frontend-service
-            port:
-              number: 90
-
-      - path: /chat
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-frontend-service
+            name: chat-backend-service
             port:
               number: 88
+
 
       - path: /ai
         pathType: Prefix

@@ -18,7 +18,6 @@ public class Main {
 
         server.setHandler(context);
         server.start();
-        System.out.println("Chat server running on port 8080...");
         server.join();
     }
 

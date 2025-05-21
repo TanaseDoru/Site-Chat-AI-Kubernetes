@@ -125,10 +125,12 @@ export default {
     connect() {
       this.addLog('Attempting to connect...');
       try {
-        const endpoint = process.env.VUE_APP_WS_ENDPOINT || '/chat';
         const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const url = `${wsProto}://${window.location.hostname}:88${endpoint}?username=${encodeURIComponent(this.username)}`;
+        const nodePort = 30080;       // must match your Service.nodePort
+        const endpoint = '/chat';
+        const url = `${wsProto}://${window.location.hostname}:${nodePort}${endpoint}?username=${encodeURIComponent(this.username)}`;
         this.socket = new WebSocket(url);
+
 
 
         this.socket.onopen = () => {
