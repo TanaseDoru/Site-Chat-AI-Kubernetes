@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ai-backend
-        image: tanase0/ai-service-backend:latest
+        image: localhost:32000/ai-service-backend:latest
         ports:
         - containerPort: 8000
 ---

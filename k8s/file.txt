@@ -1,4 +1,4 @@
-]633;E;for file in *;492b113d-fac7-466c-b85d-0fe14eba9110]633;C===== ai-backend.yaml =====
+===== ai-backend.yaml =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: ai-backend
-        image: tanase0/ai-service-backend:latest
+        image: localhost:32000/ai-service-backend:latest
         ports:
         - containerPort: 8000
 ---
@@ -49,13 +49,13 @@ spec:
     spec:
       containers:
       - name: ai-frontend
-        image: tanase0/ai-service-frontend:latest
+        image: localhost:32000/ai-service-frontend:latest
         ports:
         - containerPort: 70
           hostPort: 70
         env:
         - name: VITE_API_URL
-          value: "http://ai-backend-service:8000"
+          value: "/api"
 ---
 apiVersion: v1
 kind: Service
@@ -86,7 +86,7 @@ spec:
     spec:
       containers:
       - name: chat-backend-java
-        image: tanase0/backend-chat-std:latest
+        image: localhost:32000/backend-chat-std:latest
         ports:
         - containerPort: 88
           hostPort: 88
@@ -120,7 +120,7 @@ metadata:
   name: vvveb-pv
 spec:
   capacity:
-    storage: 1Gi
+    storage: 2Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
@@ -223,7 +223,7 @@ spec:
     spec:
       containers:
       - name: chat-frontend
-        image: tanase0/frontend-chat-std:latest
+        image: localhost:32000/frontend-chat-std:latest
         ports:
         - containerPort: 90
           hostPort: 90
@@ -252,6 +252,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Allow HTTP access alongside HTTPS
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "Upgrade";
@@ -283,8 +284,7 @@ spec:
           service:
             name: vvveb-service
             port:
-              number: 8080
-
+              number: 80
 ===== mongodb-deployment.yaml =====
 apiVersion: apps/v1
 kind: Deployment

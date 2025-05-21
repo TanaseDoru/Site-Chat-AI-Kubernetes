@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: chat-backend-java
-        image: tanase0/backend-chat-std:latest
+        image: localhost:32000/backend-chat-std:latest
         ports:
         - containerPort: 88
           hostPort: 88

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ai-frontend
-        image: tanase0/ai-service-frontend:latest
+        image: localhost:32000/ai-service-frontend:latest
         ports:
         - containerPort: 70
           hostPort: 70

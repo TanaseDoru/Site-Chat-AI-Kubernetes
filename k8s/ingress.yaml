@@ -24,6 +24,14 @@ spec:
             port:
               number: 90
 
+      - path: /chat
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-frontend-service
+            port:
+              number: 88
+
       - path: /ai
         pathType: Prefix
         backend:
@@ -38,4 +46,4 @@ spec:
           service:
             name: vvveb-service
             port:
-              number: 8080
+              number: 80

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: chat-frontend
-        image: tanase0/frontend-chat-std:latest
+        image: localhost:32000/frontend-chat-std:latest
         ports:
         - containerPort: 90
           hostPort: 90
