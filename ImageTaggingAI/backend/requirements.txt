@@ -1,0 +1,9 @@
+# Python packages required for the AI backend service
+fastapi==0.104.1
+python-multipart==0.0.6
+uvicorn==0.24.0
+pyodbc==4.0.39
+python-dotenv==1.0.0
+azure-storage-blob==12.18.3
+azure-ai-vision-imageanalysis==1.0.0b1
+azure-core==1.29.5
