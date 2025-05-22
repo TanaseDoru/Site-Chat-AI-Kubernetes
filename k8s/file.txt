@@ -1,4 +1,4 @@
-===== ai-backend.yaml =====
+]633;E;for file in *;439448aa-fdd8-415f-b7a8-4ff96f020f36]633;C===== ai-backend.yaml =====
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -70,6 +70,7 @@ spec:
   type: ClusterIP
 
 ===== backend-deployment.yaml =====
+# backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -88,30 +89,30 @@ spec:
       - name: chat-backend-java
         image: localhost:32000/backend-chat-std:latest
         ports:
-        - containerPort: 88
-          hostPort: 88
+        - containerPort: 88      # no hostPort
         env:
         - name: MONGO_URI
           value: "mongodb://mongodb-service:27017/chatdb"
+
 ===== backend-service.yaml =====
 apiVersion: v1
 kind: Service
 metadata:
   name: chat-backend-service
 spec:
-  ports:
-  # Service listens on port 88
-  - port: 88
-    # Service targets the containerPort named 'websocket' (which is 88) in the backend pods
-    targetPort: websocket 
-    protocol: TCP
-    name: http-websocket # Naming the port for clarity
+  type: NodePort
   selector:
-    # Selects pods with the label 'app: chat-backend'
     app: chat-backend
-  # Type ClusterIP is suitable for internal communication via Ingress
-  type: ClusterIP
+  ports:
+  - name: http-websocket
+    port: 88
+    targetPort: 88
+    nodePort: 30080
+    protocol: TCP
 
+===== bckend-depl.yaml.bak =====
+
+===== bkend-srv.yaml.bak =====
 
 ===== cms-pv.yaml =====
 apiVersion: v1
@@ -137,7 +138,7 @@ metadata:
   labels:
     app: vvveb-cms
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: vvveb-cms
@@ -266,9 +267,10 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: chat-frontend-service
+            name: chat-backend-service
             port:
-              number: 90
+              number: 88
+
 
       - path: /ai
         pathType: Prefix
