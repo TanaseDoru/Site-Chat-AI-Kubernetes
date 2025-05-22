@@ -12,15 +12,19 @@ This project focuses on creating a site with a public chat accesed by everyone a
     - Backend: **maven, openjdk17, springBoot**
     - Baza de date: **MongoDB**
 - Aplicatie IA: 
-    - To be continued...
-
+    - Frontend **Vue**
+    - Backend **python** hehe
+    - Baze de date si storage pe Azure 
+    
 
 # Tutorial instalare
-De rulat script-ul /chat-site/deploy.sh
+```bash
+microk8s kubectl apply -f k8s/
+```
 
 
 ## TO DO:
-- [ ] Ai-Backend doesn't want to go to 4 replicas
-- [ ] Move docker images to private registry
+- [x] Ai-Backend doesn't want to go to 4 replicas
+- [x] Move docker images to private registry
 
 
